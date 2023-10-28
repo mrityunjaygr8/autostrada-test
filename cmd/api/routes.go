@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 func (app *application) routes() http.Handler {
@@ -12,6 +13,9 @@ func (app *application) routes() http.Handler {
 	mux.NotFound(app.notFound)
 	mux.MethodNotAllowed(app.methodNotAllowed)
 
+	mux.Use(middleware.RealIP)
+	mux.Use(middleware.RequestID)
+	mux.Use(middleware.Logger)
 	mux.Use(app.recoverPanic)
 	mux.Use(app.authenticate)
 
