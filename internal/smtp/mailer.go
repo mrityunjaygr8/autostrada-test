@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"time"
 
-	"github.com/woowoo/test/assets"
-	"github.com/woowoo/test/internal/funcs"
+	"github.com/mrityunjaygr8/autostrada-test/assets"
+	"github.com/mrityunjaygr8/autostrada-test/internal/funcs"
 
 	"github.com/go-mail/mail/v2"
 

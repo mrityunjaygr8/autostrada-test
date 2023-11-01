@@ -9,10 +9,10 @@ import (
 	"runtime/debug"
 	"sync"
 
-	"github.com/woowoo/test/internal/env"
-	"github.com/woowoo/test/internal/smtp"
-	"github.com/woowoo/test/internal/version"
+	"github.com/mrityunjaygr8/autostrada-test/internal/env"
 	pgstore "github.com/mrityunjaygr8/autostrada-test/internal/postgres/store"
+	"github.com/mrityunjaygr8/autostrada-test/internal/smtp"
+	"github.com/mrityunjaygr8/autostrada-test/internal/version"
 
 	"github.com/lmittmann/tint"
 )
