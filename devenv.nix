@@ -7,18 +7,23 @@
     DB_NAME = "test";
     DB_USER = "postgres";
     DB_PASS = "postgres";
+    DB_TEST_NAME = "testing";
     DB_DSN = "${config.env.DB_USER}:${config.env.DB_PASS}@localhost/${config.env.DB_NAME}?sslmode=disable";
+    DB_TEST_DSN = "${config.env.DB_USER}:${config.env.DB_PASS}@localhost/${config.env.DB_TEST_NAME}?sslmode=disable";
   };
 
   # https://devenv.sh/packages/
-  packages = [ pkgs.git pkgs.go-migrate pkgs.sqlc pkgs.air];
+  packages = with pkgs; [ git go-migrate sqlc air fish lazygit];
 
   # https://devenv.sh/scripts/
   scripts.hello.exec = "echo hello from $GREET";
 
   enterShell = ''
-    hello
-    git --version
+    rm -rf .env
+    cat > .env <<ENV
+DB_DSN=${config.env.DB_DSN}
+DB_TEST_DSN=${config.env.DB_TEST_DSN}
+ENV
   '';
 
   # https://devenv.sh/languages/
@@ -28,7 +33,7 @@
   services.postgres = {
     enable = true;
     package = pkgs.postgresql_15;
-    initialDatabases = [{ name = config.env.DB_NAME; }];
+    initialDatabases = [{ name = config.env.DB_NAME; } {name = config.env.DB_TEST_NAME;}];
     listen_addresses = "localhost";
     port = 5432;
     initialScript = ''
