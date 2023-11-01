@@ -1,0 +1,9 @@
+### Create New user
+POST {{base_url}}/users
+Content-Type: application/json
+
+{
+  "Email": "msyt1aabaaa969a@gmail.com",
+  "Password": "woowoowoo",
+  "Admin": true
+}

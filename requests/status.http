@@ -1,0 +1,2 @@
+### GET status
+GET {{base_url}}/status
