@@ -1,0 +1,13 @@
+version: "2"
+sql:
+    - engine: "postgresql"
+      queries: "internal/postgres/queries"
+      schema: "assets/migrations"
+      gen:
+          go:
+              package: "models"
+              out: "internal/postgres/models"
+              sql_package: "pgx/v5"
+              overrides:
+                - db_type: "uuid"
+                  go_type: "github.com/google/uuid.UUID"
