@@ -24,9 +24,9 @@ func (app *application) status(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) createUser(w http.ResponseWriter, r *http.Request) {
 	var input struct {
-		Email     string              `json:"Email"`
-		Password  string              `json:"Password"`
-		Admin     bool                `json:"Admin"`
+		Email     string              `json:"email"`
+		Password  string              `json:"password"`
+		Admin     bool                `json:"admin"`
 		Validator validator.Validator `json:"-"`
 	}
 
@@ -47,14 +47,14 @@ func (app *application) createUser(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	input.Validator.CheckField(input.Email != "", "Email", "Email is required")
-	input.Validator.CheckField(validator.Matches(input.Email, validator.RgxEmail), "Email", "Must be a valid email address")
-	input.Validator.CheckField(existingUser == nil, "Email", "Email is already in use")
+	input.Validator.CheckField(input.Email != "", "email", "Email is required")
+	input.Validator.CheckField(validator.Matches(input.Email, validator.RgxEmail), "email", "Must be a valid email address")
+	input.Validator.CheckField(existingUser == nil, "email", "Email is already in use")
 
-	input.Validator.CheckField(input.Password != "", "Password", "Password is required")
-	input.Validator.CheckField(len(input.Password) >= 8, "Password", "Password is too short")
-	input.Validator.CheckField(len(input.Password) <= 72, "Password", "Password is too long")
-	input.Validator.CheckField(validator.NotIn(input.Password, password.CommonPasswords...), "Password", "Password is too common")
+	input.Validator.CheckField(input.Password != "", "password", "Password is required")
+	input.Validator.CheckField(len(input.Password) >= 8, "password", "Password is too short")
+	input.Validator.CheckField(len(input.Password) <= 72, "password", "Password is too long")
+	input.Validator.CheckField(validator.NotIn(input.Password, password.CommonPasswords...), "password", "Password is too common")
 
 	if input.Validator.HasErrors() {
 		app.failedValidation(w, r, input.Validator)
