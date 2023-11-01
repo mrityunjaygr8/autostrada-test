@@ -3,15 +3,16 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/mrityunjaygr8/autostrada-test/store"
 	"log/slog"
 	"os"
 	"runtime/debug"
 	"sync"
 
-	"github.com/woowoo/test/internal/database"
 	"github.com/woowoo/test/internal/env"
 	"github.com/woowoo/test/internal/smtp"
 	"github.com/woowoo/test/internal/version"
+	pgstore "github.com/mrityunjaygr8/autostrada-test/internal/postgres/store"
 
 	"github.com/lmittmann/tint"
 )
@@ -48,7 +49,7 @@ type config struct {
 
 type application struct {
 	config config
-	db     *database.DB
+	store  store.GuzeiStore
 	logger *slog.Logger
 	mailer *smtp.Mailer
 	wg     sync.WaitGroup
@@ -77,17 +78,17 @@ func run(logger *slog.Logger) error {
 		return nil
 	}
 
-	db, err := database.New(cfg.db.dsn, cfg.db.automigrate)
+	pgStore, closer, err := pgstore.NewPostgresStore(cfg.db.dsn, cfg.db.automigrate)
 	if err != nil {
 		return err
 	}
-	defer db.Close()
+	defer closer()
 
 	mailer := smtp.NewMailer(cfg.smtp.host, cfg.smtp.port, cfg.smtp.username, cfg.smtp.password, cfg.smtp.from)
 
 	app := &application{
 		config: cfg,
-		db:     db,
+		store:  pgStore,
 		logger: logger,
 		mailer: mailer,
 	}
