@@ -98,3 +98,11 @@ migrations/force:
 migrations/version:
 	migrate -path=./assets/migrations -database="postgres://${DB_DSN}" version
 
+
+# ==================================================================================== #
+# SQLC Generation
+# ==================================================================================== #
+## sqlc: generate the SQLC models using the sqlc.yaml config file
+.PHONY: sqlc
+sqlc:
+	sqlc generate
