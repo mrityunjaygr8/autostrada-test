@@ -23,6 +23,7 @@ type PostgresStore struct {
 
 var ErrCreatingPostgresPool = errors.New("error creating postgres pool")
 var ErrConnectingToPostgres = errors.New("error connecting to postgres")
+var ErrInvalidMigrationDirection = errors.New("invalid migration direction passed")
 
 type transactionFunction func() error
 
@@ -64,21 +65,8 @@ func NewPostgresStore(dbString string, autoMigrate bool) (*PostgresStore, func()
 	}
 
 	if autoMigrate {
-		iofsDriver, err := iofs.New(assets.EmbeddedFiles, "migrations")
+		err := migrateDb(dbString, DirectionUP)
 		if err != nil {
-			return nil, nil, err
-		}
-
-		migrator, err := migrate.NewWithSourceInstance("iofs", iofsDriver, "pgx5://"+dbString)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		err = migrator.Up()
-		switch {
-		case errors.Is(err, migrate.ErrNoChange):
-			break
-		case err != nil:
 			return nil, nil, err
 		}
 	}
@@ -88,6 +76,42 @@ func NewPostgresStore(dbString string, autoMigrate bool) (*PostgresStore, func()
 	}
 
 	return &PostgresStore{db: db}, closer, nil
+}
+
+type MigrationDirection int
+
+const (
+	DirectionNull MigrationDirection = iota
+	DirectionUP
+	DirectionDown
+)
+
+func migrateDb(dbString string, direction MigrationDirection) error {
+	iofsDriver, err := iofs.New(assets.EmbeddedFiles, "migrations")
+	if err != nil {
+		return err
+	}
+
+	migrator, err := migrate.NewWithSourceInstance("iofs", iofsDriver, "pgx5://"+dbString)
+	if err != nil {
+		return err
+	}
+
+	switch direction {
+	case DirectionUP:
+		err = migrator.Up()
+	case DirectionDown:
+		err = migrator.Down()
+	default:
+		return ErrInvalidMigrationDirection
+	}
+	switch {
+	case errors.Is(err, migrate.ErrNoChange):
+		break
+	case err != nil:
+		return err
+	}
+	return nil
 }
 
 func (p *PostgresStore) UserInsert(email, password string, id uuid.UUID, admin bool) (*store.User, error) {
