@@ -7,8 +7,8 @@ import (
 	"runtime/debug"
 	"strings"
 
-	"github.com/woowoo/test/internal/response"
-	"github.com/woowoo/test/internal/validator"
+	"github.com/mrityunjaygr8/autostrada-test/internal/response"
+	"github.com/mrityunjaygr8/autostrada-test/internal/validator"
 )
 
 func (app *application) reportServerError(r *http.Request, err error) {

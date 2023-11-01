@@ -1,14 +1,14 @@
 package main
 
 import (
+	"github.com/mrityunjaygr8/autostrada-test/internal/password"
+	"github.com/mrityunjaygr8/autostrada-test/internal/request"
+	"github.com/mrityunjaygr8/autostrada-test/internal/response"
+	"github.com/mrityunjaygr8/autostrada-test/internal/validator"
 	"net/http"
 	"strconv"
 	"time"
 
-	"github.com/woowoo/test/internal/password"
-	"github.com/woowoo/test/internal/request"
-	"github.com/woowoo/test/internal/response"
-	"github.com/woowoo/test/internal/validator"
 
 	"github.com/pascaldekloe/jwt"
 )
