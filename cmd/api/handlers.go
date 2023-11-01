@@ -1,16 +1,14 @@
 package main
 
 import (
+	"errors"
+	"github.com/google/uuid"
 	"github.com/mrityunjaygr8/autostrada-test/internal/password"
 	"github.com/mrityunjaygr8/autostrada-test/internal/request"
 	"github.com/mrityunjaygr8/autostrada-test/internal/response"
 	"github.com/mrityunjaygr8/autostrada-test/internal/validator"
+	"github.com/mrityunjaygr8/autostrada-test/store"
 	"net/http"
-	"strconv"
-	"time"
-
-
-	"github.com/pascaldekloe/jwt"
 )
 
 func (app *application) status(w http.ResponseWriter, r *http.Request) {
@@ -28,6 +26,7 @@ func (app *application) createUser(w http.ResponseWriter, r *http.Request) {
 	var input struct {
 		Email     string              `json:"Email"`
 		Password  string              `json:"Password"`
+		Admin     bool                `json:"Admin"`
 		Validator validator.Validator `json:"-"`
 	}
 
@@ -37,10 +36,15 @@ func (app *application) createUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	existingUser, err := app.db.GetUserByEmail(input.Email)
+	existingUser, err := app.store.UserRetrieveByEmail(input.Email)
 	if err != nil {
-		app.serverError(w, r, err)
-		return
+		switch {
+		case errors.Is(err, store.ErrUserNotFound):
+			break
+		default:
+			app.serverError(w, r, err)
+			return
+		}
 	}
 
 	input.Validator.CheckField(input.Email != "", "Email", "Email is required")
@@ -63,13 +67,18 @@ func (app *application) createUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = app.db.InsertUser(input.Email, hashedPassword)
+	id := uuid.New()
+	user, err := app.store.UserInsert(input.Email, hashedPassword, id, input.Admin)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	err = response.JSONWithHeaders(w, http.StatusCreated, user, nil)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
 }
 
 func (app *application) createAuthenticationToken(w http.ResponseWriter, r *http.Request) {
@@ -85,7 +94,7 @@ func (app *application) createAuthenticationToken(w http.ResponseWriter, r *http
 		return
 	}
 
-	user, err := app.db.GetUserByEmail(input.Email)
+	user, err := app.store.UserRetrieveByEmail(input.Email)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -110,32 +119,32 @@ func (app *application) createAuthenticationToken(w http.ResponseWriter, r *http
 		return
 	}
 
-	var claims jwt.Claims
-	claims.Subject = strconv.Itoa(user.ID)
-
-	expiry := time.Now().Add(24 * time.Hour)
-	claims.Issued = jwt.NewNumericTime(time.Now())
-	claims.NotBefore = jwt.NewNumericTime(time.Now())
-	claims.Expires = jwt.NewNumericTime(expiry)
-
-	claims.Issuer = app.config.baseURL
-	claims.Audiences = []string{app.config.baseURL}
-
-	jwtBytes, err := claims.HMACSign(jwt.HS256, []byte(app.config.jwt.secretKey))
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-
-	data := map[string]string{
-		"AuthenticationToken":       string(jwtBytes),
-		"AuthenticationTokenExpiry": expiry.Format(time.RFC3339),
-	}
-
-	err = response.JSON(w, http.StatusOK, data)
-	if err != nil {
-		app.serverError(w, r, err)
-	}
+	//var claims jwt.Claims
+	//claims.Subject = strconv.Itoa(user.ID)
+	//
+	//expiry := time.Now().Add(24 * time.Hour)
+	//claims.Issued = jwt.NewNumericTime(time.Now())
+	//claims.NotBefore = jwt.NewNumericTime(time.Now())
+	//claims.Expires = jwt.NewNumericTime(expiry)
+	//
+	//claims.Issuer = app.config.baseURL
+	//claims.Audiences = []string{app.config.baseURL}
+	//
+	//jwtBytes, err := claims.HMACSign(jwt.HS256, []byte(app.config.jwt.secretKey))
+	//if err != nil {
+	//	app.serverError(w, r, err)
+	//	return
+	//}
+	//
+	//data := map[string]string{
+	//	"AuthenticationToken":       string(jwtBytes),
+	//	"AuthenticationTokenExpiry": expiry.Format(time.RFC3339),
+	//}
+	//
+	//err = response.JSON(w, http.StatusOK, data)
+	//if err != nil {
+	//	app.serverError(w, r, err)
+	//}
 }
 
 func (app *application) protected(w http.ResponseWriter, r *http.Request) {
