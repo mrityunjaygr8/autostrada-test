@@ -8,12 +8,17 @@ import (
 
 type GuzeiStore interface {
 	UserInsert(email, password string, id uuid.UUID, admin bool) (*User, error)
-	UserList(pageSize, pageNumber int) (*UsersList, error)
+	UserList(userListParams UserListParams) (*UsersList, error)
 	UserRetrieveByEmail(email string) (*User, error)
 	UserRetrieve(id uuid.UUID) (*User, error)
 	UserUpdatePassword(id uuid.UUID, newPassword string) error
 	UserUpdateAdmin(id uuid.UUID, newAdminValue bool) error
 	UserDelete(id uuid.UUID) error
+}
+
+type UserListParams struct {
+	PageNumber int
+	PageSize   int
 }
 
 type User struct {

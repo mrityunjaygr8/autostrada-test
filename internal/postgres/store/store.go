@@ -153,11 +153,11 @@ func (p *PostgresStore) UserInsert(email, password string, id uuid.UUID, admin b
 	return user, nil
 }
 
-func (p *PostgresStore) UserList(pageNumber, pageSize int) (*store.UsersList, error) {
+func (p *PostgresStore) UserList(userListParmas store.UserListParams) (*store.UsersList, error) {
 	query := models.New(p.db)
 	params := models.UsersListParams{
-		Limit:  int32(pageSize),
-		Offset: int32((pageNumber - 1) * pageSize),
+		Limit:  int32(userListParmas.PageSize),
+		Offset: int32((userListParmas.PageNumber - 1) * userListParmas.PageSize),
 	}
 	dbUsers, err := query.UsersList(context.Background(), params)
 	if err != nil {
@@ -179,9 +179,10 @@ func (p *PostgresStore) UserList(pageNumber, pageSize int) (*store.UsersList, er
 
 	if len(dbUsers) > 0 {
 		totalObjects = int(dbUsers[0].RowData)
-		totalPages = int(math.Ceil(float64(totalObjects) / float64(pageSize)))
+		totalPages = int(math.Ceil(float64(totalObjects) / float64(userListParmas.PageSize)))
 	}
 
+	fmt.Println(users, dbUsers)
 	return &store.UsersList{Data: users, TotalObjects: totalObjects, TotalPages: totalPages}, nil
 }
 
