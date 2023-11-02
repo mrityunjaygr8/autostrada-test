@@ -9,6 +9,7 @@ import (
 	"github.com/mrityunjaygr8/autostrada-test/internal/validator"
 	"github.com/mrityunjaygr8/autostrada-test/store"
 	"net/http"
+	"strconv"
 )
 
 func (app *application) status(w http.ResponseWriter, r *http.Request) {
@@ -78,6 +79,59 @@ func (app *application) createUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		app.serverError(w, r, err)
 		return
+	}
+}
+
+const DEFAULT_PAGE_NUMBER = "1"
+const DEFAULT_PAGE_SIZE = "20"
+
+func (app *application) listUsers(w http.ResponseWriter, r *http.Request) {
+	var input struct {
+		PageSize   string
+		PageNumber string
+		Validator  validator.Validator
+	}
+
+	var params store.UserListParams
+
+	//pageNumber := r.URL.Query().Get("pageNumber")
+	//pageSize := r.URL.Query().Get("pageSize")
+
+	var pageSizeErr, pageNumberErr error
+	input.PageSize = r.URL.Query().Get("pageSize")
+	input.PageNumber = r.URL.Query().Get("pageNumber")
+
+	if input.PageNumber == "" {
+		input.PageNumber = DEFAULT_PAGE_NUMBER
+	}
+
+	if input.PageSize == "" {
+		input.PageSize = DEFAULT_PAGE_SIZE
+	}
+
+	params.PageSize, pageSizeErr = strconv.Atoi(input.PageSize)
+	params.PageNumber, pageNumberErr = strconv.Atoi(input.PageNumber)
+
+	app.logger.Info("params", "pageNumber", input.PageNumber, "pageSize", input.PageSize, "pageNumberErr", pageNumberErr, "pageSizeErr", pageSizeErr)
+	input.Validator.CheckField(pageSizeErr == nil, "pageSize", "pageSize must be a positive integer")
+	input.Validator.CheckField(pageNumberErr == nil, "pageNumber", "pageNumber must be a positive integer")
+
+	if input.Validator.HasErrors() {
+		app.logger.Info("here")
+		app.failedValidation(w, r, input.Validator)
+		return
+	}
+	//params := store.UserListParams{PageSize: pageSize, PageNumber: pageNumber}
+	users, err := app.store.UserList(params)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	app.logger.Info("users", users.TotalPages)
+	err = response.JSON(w, http.StatusOK, users)
+	if err != nil {
+		app.serverError(w, r, err)
 	}
 }
 
