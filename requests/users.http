@@ -7,3 +7,6 @@ Content-Type: application/json
   "Password": "woowoowoo",
   "Admin": true
 }
+
+### List all Users
+GET {{base_url}}/users?pageSize=123&pageNumber=1
