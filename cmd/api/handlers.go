@@ -82,8 +82,8 @@ func (app *application) createUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-const DEFAULT_PAGE_NUMBER = "1"
-const DEFAULT_PAGE_SIZE = "20"
+const DefaultPageNumber = "1"
+const DefaultPageSize = "20"
 
 func (app *application) listUsers(w http.ResponseWriter, r *http.Request) {
 	var input struct {
@@ -102,11 +102,11 @@ func (app *application) listUsers(w http.ResponseWriter, r *http.Request) {
 	input.PageNumber = r.URL.Query().Get("pageNumber")
 
 	if input.PageNumber == "" {
-		input.PageNumber = DEFAULT_PAGE_NUMBER
+		input.PageNumber = DefaultPageNumber
 	}
 
 	if input.PageSize == "" {
-		input.PageSize = DEFAULT_PAGE_SIZE
+		input.PageSize = DefaultPageSize
 	}
 
 	params.PageSize, pageSizeErr = strconv.Atoi(input.PageSize)
