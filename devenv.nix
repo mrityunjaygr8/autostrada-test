@@ -14,6 +14,7 @@
 
   # https://devenv.sh/packages/
   packages = with pkgs; [ git go-migrate sqlc air fish lazygit];
+  dotenv.disableHint = true;
 
   # https://devenv.sh/scripts/
   scripts.hello.exec = "echo hello from $GREET";
