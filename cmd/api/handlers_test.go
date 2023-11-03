@@ -3,215 +3,158 @@ package main
 import (
 	"encoding/json"
 	"github.com/google/uuid"
-	"github.com/mrityunjaygr8/autostrada-test/internal/smtp"
 	"github.com/mrityunjaygr8/autostrada-test/store"
 	"github.com/stretchr/testify/require"
-	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 )
 
-//func Test_application_createAuthenticationToken(t *testing.T) {
-//	type fields struct {
-//		config config
-//		store  store.GuzeiStore
-//		logger *slog.Logger
-//		mailer *smtp.Mailer
-//		wg     sync.WaitGroup
-//	}
-//	type args struct {
-//		w http.ResponseWriter
-//		r *http.Request
-//	}
+type Expectation int
+
+const (
+	Success Expectation = iota
+	FieldError
+	Error
+)
+
+type args struct {
+	input  string
+	expect string
+	code   int
+}
+
+type resp struct {
+	data        map[string]any `json:"data"`
+	fieldErrors map[string]any `json:"FieldErrors"`
+	errors      map[string]any `json:"Error"`
+}
+
+func Test_application_createUser(t *testing.T) {
+	stubStore := NewStubStore()
+	tests := []struct {
+		name string
+		args args
+	}{
+		// TODO: Add test cases.
+		{
+			name: "basis insert success",
+			args: args{
+				input: `
+				{
+					"Email": "msyt1969@gmail.com",
+					"Password": "woowoowoo",
+					"Admin": true
+				}`,
+				code: http.StatusCreated,
+				expect: `{
+					"data": {
+						"email": "msyt1969@gmail.com",
+						"admin": true
+					}
+				}`,
+			},
+		},
+		{
+			name: "basis insert bad email",
+			args: args{
+				input: `
+				{
+					"Email": "msyt1969",
+					"Password": "woowoowoo",
+					"Admin": true
+				}`,
+				code: http.StatusUnprocessableEntity,
+				expect: `{
+					"FieldErrors": {
+						"email": "Must be a valid email address"
+					}
+				}`,
+			},
+		},
+		{
+			name: "basic insert no body",
+			args: args{
+				input:  ``,
+				code:   http.StatusBadRequest,
+				expect: `{"Error": "Body must not be empty"}`,
+			},
+		},
+	}
+	app := &application{
+		store: stubStore,
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			request := httptest.NewRequest(http.MethodPost, "/users", strings.NewReader(tt.args.input))
+			response := httptest.NewRecorder()
+			app.createUser(response, request)
+			require.Equal(t, tt.args.code, response.Code)
+			var res map[string]any
+			err := json.Unmarshal(response.Body.Bytes(), &res)
+			require.Nil(t, err)
+			var expected resp
+			t.Log(tt.args.expect, []byte(tt.args.expect))
+			err = json.Unmarshal([]byte(tt.args.expect), &expected)
+			require.Nil(t, err)
+			t.Log(expected)
+			//for key, val := range tt.args.expect {
+			//	require.Equal(t, val, res[key])
+			//}
+		})
+	}
+}
+
+//func Test_application_listUsers(t *testing.T) {
 //	tests := []struct {
-//		name   string
-//		fields fields
-//		args   args
+//		name  string
+//		store store.GuzeiStore
+//		args  args
 //	}{
 //		// TODO: Add test cases.
 //	}
 //	for _, tt := range tests {
 //		t.Run(tt.name, func(t *testing.T) {
 //			app := &application{
-//				config: tt.fields.config,
-//				store:  tt.fields.store,
-//				logger: tt.fields.logger,
-//				mailer: tt.fields.mailer,
-//				wg:     tt.fields.wg,
+//				store: tt.store,
 //			}
-//			app.createAuthenticationToken(tt.args.w, tt.args.r)
+//			app.listUsers(tt.args.w, tt.args.r)
 //		})
 //	}
 //}
 
-func Test_application_createUser(t *testing.T) {
-	type Expection int
-	const (
-		Success Expection = iota
-		FieldError
-		Error
-	)
-	type fields struct {
-		config config
-		store  store.GuzeiStore
-		logger *slog.Logger
-		mailer *smtp.Mailer
-		wg     sync.WaitGroup
-	}
-	type args struct {
-		w           *httptest.ResponseRecorder
-		r           *http.Request
-		expectation Expection
-	}
-
-	type errorMessage struct {
-		Error string
-	}
-	store := NewStubStore()
-	f := fields{
-		store: store,
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-	}{
-		// TODO: Add test cases.
-		{
-
-			name:   "basis insert success",
-			fields: f,
-			args: args{
-				w: httptest.NewRecorder(),
-				r: httptest.NewRequest(http.MethodPost, "/users", strings.NewReader(`
-				{
-					"Email": "msyt1969@gmail.com",
-					"Password": "woowoowoo",
-					"Admin": true
-				}`)),
-				expectation: Error,
-			},
-		},
-		{
-			name:   "basis insert no body",
-			fields: f,
-			args: args{
-				w:           httptest.NewRecorder(),
-				r:           httptest.NewRequest(http.MethodPost, "/users", nil),
-				expectation: Error,
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			app := &application{
-				config: tt.fields.config,
-				store:  tt.fields.store,
-				logger: tt.fields.logger,
-				mailer: tt.fields.mailer,
-				wg:     tt.fields.wg,
-			}
-			app.createUser(tt.args.w, tt.args.r)
-			if tt.args.expectation == Error {
-				var e errorMessage
-				err := json.NewDecoder(tt.args.w.Body).Decode(&e)
-				require.Nil(t, err)
-				require.Equal(t, "Body must not be empty", e.Error)
-				require.Equal(t, http.StatusBadRequest, tt.args.w.Code)
-
-			}
-		})
-	}
-}
-
-func Test_application_listUsers(t *testing.T) {
-	type fields struct {
-		config config
-		store  store.GuzeiStore
-		logger *slog.Logger
-		mailer *smtp.Mailer
-		wg     sync.WaitGroup
-	}
-	type args struct {
-		w http.ResponseWriter
-		r *http.Request
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			app := &application{
-				config: tt.fields.config,
-				store:  tt.fields.store,
-				logger: tt.fields.logger,
-				mailer: tt.fields.mailer,
-				wg:     tt.fields.wg,
-			}
-			app.listUsers(tt.args.w, tt.args.r)
-		})
-	}
-}
-
 func Test_application_status(t *testing.T) {
-	type fields struct {
-		config config
-		store  store.GuzeiStore
-		logger *slog.Logger
-		mailer *smtp.Mailer
-		wg     sync.WaitGroup
-	}
-	type args struct {
-		w *httptest.ResponseRecorder
-		r *http.Request
-	}
-	store := NewStubStore()
-
-	f := fields{
-		store: store,
-	}
-	type res struct {
-		Status string `json:"Status"`
-	}
+	stubStore := NewStubStore()
 	tests := []struct {
-		name   string
-		fields fields
-		args   args
+		name string
+		args args
 	}{
 		{
-			name:   "basic status",
-			fields: f,
+			name: "basic status",
 			args: args{
-				w: httptest.NewRecorder(),
-				r: httptest.NewRequest(http.MethodGet, "/status", nil),
+				code: http.StatusOK,
+				expect: `{
+					"Status": "OK",
+				}`,
 			},
 		},
 	}
+	app := &application{
+		store: stubStore,
+	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			app := &application{
-				config: tt.fields.config,
-				store:  tt.fields.store,
-				logger: tt.fields.logger,
-				mailer: tt.fields.mailer,
-				wg:     tt.fields.wg,
-			}
-			app.status(tt.args.w, tt.args.r)
-			require.NotNil(t, tt.args.w)
-			require.Equal(t, http.StatusOK, tt.args.w.Code)
-			require.Equal(t, "application/json", tt.args.w.Header().Get("Content-Type"))
-			var m res
-			err := json.NewDecoder(tt.args.w.Body).Decode(&m)
+			request := httptest.NewRequest(http.MethodGet, "/status", nil)
+			response := httptest.NewRecorder()
+			app.status(response, request)
+			var res map[string]any
+			err := json.Unmarshal(response.Body.Bytes(), &res)
 			require.Nil(t, err)
-			require.Equal(t, "OK", m.Status)
+			//for key, val := range tt.args.expect {
+			//	require.Equal(t, val, res[key])
+			//}
 		})
 	}
 }

@@ -75,7 +75,7 @@ func (app *application) createUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = response.JSONWithHeaders(w, http.StatusCreated, user, nil)
+	err = response.JSONWithHeaders(w, http.StatusCreated, map[string]interface{}{"data": user}, nil)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -128,7 +128,6 @@ func (app *application) listUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.logger.Info("users", users.TotalPages)
 	err = response.JSON(w, http.StatusOK, users)
 	if err != nil {
 		app.serverError(w, r, err)
