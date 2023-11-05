@@ -88,7 +88,10 @@ func TestPostgresStoreUserList(t *testing.T) {
 		_, _ = postgresStore.UserInsert(email+"j", password, uuid.New(), admin)
 		_, _ = postgresStore.UserInsert(email+"k", password, uuid.New(), admin)
 		_, _ = postgresStore.UserInsert(email+"l", password, uuid.New(), admin)
-		users, err := postgresStore.UserList(1, 10)
+		users, err := postgresStore.UserList(store.UserListParams{
+			PageNumber: 1,
+			PageSize:   10,
+		})
 		require.Nil(t, err)
 		require.NotNil(t, users)
 
@@ -105,7 +108,10 @@ func TestPostgresStoreUserList(t *testing.T) {
 		postgresStore, teardownTest := setupTest(t)
 		defer teardownTest(t)
 
-		users, err := postgresStore.UserList(1, 10)
+		users, err := postgresStore.UserList(store.UserListParams{
+			PageNumber: 1,
+			PageSize:   10,
+		})
 		require.Nil(t, err)
 		require.NotNil(t, users)
 

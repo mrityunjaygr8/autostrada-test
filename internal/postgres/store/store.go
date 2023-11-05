@@ -183,7 +183,13 @@ func (p *PostgresStore) UserList(userListParmas store.UserListParams) (*store.Us
 	}
 
 	fmt.Println(users, dbUsers)
-	return &store.UsersList{Data: users, TotalObjects: totalObjects, TotalPages: totalPages}, nil
+	return &store.UsersList{
+		Data:         users,
+		TotalObjects: totalObjects,
+		TotalPages:   totalPages,
+		Page:         userListParmas.PageNumber,
+		PageSize:     userListParmas.PageSize,
+	}, nil
 }
 
 func (p *PostgresStore) UserRetrieve(id uuid.UUID) (*store.User, error) {

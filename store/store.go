@@ -31,8 +31,10 @@ type User struct {
 
 type UsersList struct {
 	Data         []User `json:"data"`
-	TotalObjects int    `json:"total"`
-	TotalPages   int    `json:"pages"`
+	TotalObjects int    `json:"total_count"`
+	TotalPages   int    `json:"total_pages"`
+	Page         int    `json:"page"`
+	PageSize     int    `json:"page_size"`
 }
 
 var ErrUserExists = errors.New("user with specified email already exists")
