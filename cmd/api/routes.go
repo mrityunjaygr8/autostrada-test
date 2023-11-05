@@ -22,12 +22,12 @@ func (app *application) routes() http.Handler {
 	mux.Get("/status", app.status)
 	mux.Post("/users", app.createUser)
 	mux.Get("/users", app.listUsers)
-	mux.Post("/authentication-tokens", app.createAuthenticationToken)
+	//mux.Post("/authentication-tokens", app.createAuthenticationToken)
 
 	mux.Group(func(mux chi.Router) {
 		mux.Use(app.requireAuthenticatedUser)
 
-		mux.Get("/protected", app.protected)
+		//mux.Get("/protected", app.protected)
 	})
 
 	return mux
